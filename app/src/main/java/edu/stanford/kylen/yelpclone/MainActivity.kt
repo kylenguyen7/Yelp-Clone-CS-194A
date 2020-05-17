@@ -3,6 +3,7 @@ package edu.stanford.kylen.yelpclone
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
+import android.view.Menu
 import android.widget.LinearLayout
 import kotlinx.android.synthetic.main.activity_main.*
 import retrofit2.Call
@@ -17,6 +18,11 @@ private const val BASE_URL = "https://api.yelp.com/v3/"
 private const val API_KEY = "2mn9fPSfEqsFLV644PIdcHCBIqSv5qvcZMIbsIYoLDs-cTL_oF28QkGMZvtjJp7yy6wYrjrgZjWuiJpsITXbA9IGa1hO2646byThH7yHYxEzZpAFcQF9685L4DDBXnYx"
 
 class MainActivity : AppCompatActivity() {
+
+    override fun onCreateOptionsMenu(menu: Menu): Boolean {
+        menuInflater.inflate(R.menu.options_menu, menu)
+        return true
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
