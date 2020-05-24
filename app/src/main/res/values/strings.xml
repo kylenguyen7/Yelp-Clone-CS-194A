@@ -1,3 +1,4 @@
 <resources>
-    <string name="app_name">Yelp Clone</string>
+    <string name="app_name">Restaurant Finder</string>
+    <string name="search_title">Search Restaurants</string>
 </resources>

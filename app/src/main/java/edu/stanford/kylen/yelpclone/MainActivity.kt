@@ -1,9 +1,17 @@
 package edu.stanford.kylen.yelpclone
 
+import android.content.Context
+import android.location.LocationManager
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.text.Editable
+import android.text.TextWatcher
 import android.util.Log
+import android.view.Menu
+import android.view.MenuItem
 import android.widget.LinearLayout
+import android.widget.SearchView
+import androidx.core.widget.addTextChangedListener
 import kotlinx.android.synthetic.main.activity_main.*
 import retrofit2.Call
 import retrofit2.Callback
@@ -17,27 +25,74 @@ private const val BASE_URL = "https://api.yelp.com/v3/"
 private const val API_KEY = "2mn9fPSfEqsFLV644PIdcHCBIqSv5qvcZMIbsIYoLDs-cTL_oF28QkGMZvtjJp7yy6wYrjrgZjWuiJpsITXbA9IGa1hO2646byThH7yHYxEzZpAFcQF9685L4DDBXnYx"
 
 class MainActivity : AppCompatActivity() {
+    private val retrofit = Retrofit.Builder()
+        .baseUrl(BASE_URL)
+        .addConverterFactory(GsonConverterFactory.create())
+        .build()
+    private val yelpService = retrofit.create(YelpService::class.java)
+    private var restaurants = mutableListOf<YelpRestaurant>()
+    private var adapter = RestaurantsAdapter(this, restaurants)
+    private var currentSearchTerm = "Avocado Toast"
+    private var currentLocation = "New York City"
+
+    override fun onCreateOptionsMenu(menu: Menu): Boolean {
+        menuInflater.inflate(R.menu.options_menu, menu)
+
+        val searchItem = menu.findItem(R.id.search)
+        val searchView : SearchView = searchItem.actionView as SearchView
+
+        searchView.queryHint = "Search..."
+
+        searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
+            override fun onQueryTextSubmit(query: String?): Boolean {
+                Log.i(TAG, "onQueryTextSubmit: $query")
+
+                if(query == null) {
+                    Log.w(TAG, "Did not receive valid query... exiting")
+                    return false;
+                }
+
+                currentSearchTerm = query
+                newSearch(currentSearchTerm, currentLocation);
+                return true
+            }
+
+            override fun onQueryTextChange(newText: String?): Boolean {
+                Log.i(TAG, "onQueryTextChange")
+                return true
+            }
+
+        })
+
+        return true
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-
-        val restaurants = mutableListOf<YelpRestaurant>()
-        val adapter = RestaurantsAdapter(this, restaurants)
+        // Set up recycler view
         rvRestaurants.adapter = adapter
         rvRestaurants.layoutManager = LinearLayoutManager1(this)
 
-        val retrofit = Retrofit.Builder()
-            .baseUrl(BASE_URL)
-            .addConverterFactory(GsonConverterFactory.create())
-            .build()
+        // Initial example search
+        newSearch(currentSearchTerm, currentLocation)
 
-        // Retrofit implements YelpService interface for us
-        val yelpService = retrofit.create(YelpService::class.java)
+        etLocation.addTextChangedListener(object: TextWatcher {
+            override fun afterTextChanged(s: Editable?) {
+                currentLocation = s.toString();
+                newSearch(currentSearchTerm, currentLocation)
+            }
 
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+
+        })
+    }
+
+    fun newSearch(searchTerm: String, location: String) {
         // Asynchronous call to API
-        yelpService.searchRestaurants("Bearer $API_KEY", "Avocado Toast", "New York").enqueue(object : Callback<YelpSearchResult> {
+        yelpService.searchRestaurants("Bearer $API_KEY", searchTerm, location).enqueue(object : Callback<YelpSearchResult> {
             override fun onResponse(call: Call<YelpSearchResult>, response: Response<YelpSearchResult>) {
                 Log.i(TAG, "onResponse $response")
                 val body = response.body()
@@ -46,6 +101,7 @@ class MainActivity : AppCompatActivity() {
                     Log.w(TAG, "Did not receive valid response body from Yelp API... exiting")
                     return
                 }
+                restaurants.clear()
                 restaurants.addAll(body.restaurants)
                 adapter.notifyDataSetChanged()
             }
@@ -54,7 +110,5 @@ class MainActivity : AppCompatActivity() {
                 Log.i(TAG, "onFailure $t")
             }
         })
-
-
     }
 }
