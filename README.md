@@ -22,7 +22,7 @@ The following **extensions** are implemented:
 
 Here's a walkthrough of Restaurant Finder:
 
-<img src='https://media.giphy.com/media/ciweLtGk7u1E3MzvkJ/giphy.gif'' alt='Video Walkthrough' />
+<img src='https://media.giphy.com/media/ciweLtGk7u1E3MzvkJ/giphy.gif' title='Video Walkthrough' width='' alt='Video Walkthrough' />
 
 GIF created with [ShareX](https://getsharex.com/).
 
