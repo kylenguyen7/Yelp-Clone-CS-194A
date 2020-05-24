@@ -1,12 +1,17 @@
 package edu.stanford.kylen.yelpclone
 
+import android.content.Context
+import android.location.LocationManager
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.text.Editable
+import android.text.TextWatcher
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.widget.LinearLayout
 import android.widget.SearchView
+import androidx.core.widget.addTextChangedListener
 import kotlinx.android.synthetic.main.activity_main.*
 import retrofit2.Call
 import retrofit2.Callback
@@ -27,12 +32,16 @@ class MainActivity : AppCompatActivity() {
     private val yelpService = retrofit.create(YelpService::class.java)
     private var restaurants = mutableListOf<YelpRestaurant>()
     private var adapter = RestaurantsAdapter(this, restaurants)
+    private var currentSearchTerm = "Avocado Toast"
+    private var currentLocation = "New York City"
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         menuInflater.inflate(R.menu.options_menu, menu)
 
         val searchItem = menu.findItem(R.id.search)
         val searchView : SearchView = searchItem.actionView as SearchView
+
+        searchView.queryHint = "Search..."
 
         searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
             override fun onQueryTextSubmit(query: String?): Boolean {
@@ -43,7 +52,8 @@ class MainActivity : AppCompatActivity() {
                     return false;
                 }
 
-                newSearch(query)
+                currentSearchTerm = query
+                newSearch(currentSearchTerm, currentLocation);
                 return true
             }
 
@@ -61,15 +71,28 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
+        // Set up recycler view
         rvRestaurants.adapter = adapter
         rvRestaurants.layoutManager = LinearLayoutManager1(this)
 
-        newSearch("Avocado Toast")
+        // Initial example search
+        newSearch(currentSearchTerm, currentLocation)
+
+        etLocation.addTextChangedListener(object: TextWatcher {
+            override fun afterTextChanged(s: Editable?) {
+                currentLocation = s.toString();
+                newSearch(currentSearchTerm, currentLocation)
+            }
+
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+
+        })
     }
 
-    fun newSearch(searchTerm: String) {
+    fun newSearch(searchTerm: String, location: String) {
         // Asynchronous call to API
-        yelpService.searchRestaurants("Bearer $API_KEY", searchTerm, "New York").enqueue(object : Callback<YelpSearchResult> {
+        yelpService.searchRestaurants("Bearer $API_KEY", searchTerm, location).enqueue(object : Callback<YelpSearchResult> {
             override fun onResponse(call: Call<YelpSearchResult>, response: Response<YelpSearchResult>) {
                 Log.i(TAG, "onResponse $response")
                 val body = response.body()
